@@ -90,9 +90,11 @@ def compute_thumbnail_dimensions(src,format):
   x_factor = float(width)  / format['dimensions'][0]
   y_factor = float(height) / format['dimensions'][1]
   if x_factor > y_factor:
-    width, height = format['dimensions'][0], int(height / x_factor)
+    if x_factor > 1:
+      width, height = format['dimensions'][0], int(height / x_factor)
   else:
-    width, height = int(width / y_factor), format['dimensions'][1]
+    if y_factor > 1:
+      width, height = int(width / y_factor), format['dimensions'][1]
   return width, height
   
   
