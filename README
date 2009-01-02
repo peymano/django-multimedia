@@ -1,0 +1,60 @@
+
+django-multimedia
+
+django-multimedia is a super simple, reusable Django 1.0 application for managing media
+files. Currently, it supports image files (JPEG, PNG, TIFF, and GIF); audio and
+video files are planned. It doesn't do much, but I find it useful for managing images
+on a blog.
+
+Quick introduction
+==================
+
+Once installed, you upload media using the Django admin interface. To insert a
+thumbnail in a template:
+
+  {% thumbnail 15 with format=600x400,round=10 %}
+  
+...which looks up the image with id=15, creates a 600x400 max thumbnail with rounded
+corners of radius 10 (if it doesn't already exist), and outputs an HTML <img> tag.
+
+The 'format' is shorthand for the look of a thumbnail image. Here are the currently
+supported options:
+
+  [width]x[height]          thumbnail width and height
+  square or !square         crop image to a square or not
+  round=[n]                 round corners, where n is radius in pixels
+  bg=[color]                background color for the empty space that's created when
+                            an image is rounded (e.g., 'ff0000')
+  template=[template]       Django template used to render the image
+
+A format can be specified inline, like the above example, or you can name a format
+and refer to it. Here's an example:
+
+  ...in your settings.py:
+  
+  MULTIMEDIA_FORMATS = [
+    'blog': '600x400,round=10,bg=ffffff,template=blog_image.html',
+    'mini': '200x200,square,round=5,bg=ffffff'
+  ]
+  
+  ...in your templates:
+  
+  {% thumbnail 43 format=blog %}
+  
+  {% thumbnail 44 format=mini %}
+
+
+Installation
+============
+
+See ./INSTALL
+
+Documentation
+=============
+
+See ./docs/*
+
+License
+=======
+
+See ./LICENSE

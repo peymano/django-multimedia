@@ -1,0 +1,39 @@
+
+Dependencies
+============
+
+django-multimedia depends on:
+
+  PIL          http://www.pythonware.com/products/pil/
+  exiftool     http://www.sno.phy.queensu.ca/~phil/exiftool/  
+  Django 1.0+  http://www.dejangoproject.com/
+  Python 2.3+  http://www.python.org/
+
+On Ubuntu/Debian systems, you can install exiftool and PIL using:
+
+  apt-get install libimage-exiftool-perl
+  apt-get install python-imaging
+
+
+INSTALLATION
+============
+
+To install, run the following command inside this directory:
+
+    python setup.py install
+
+Or, if you'd prefer, you can simply copy the ``multimedia``
+directory somewhere on your Python path, or symlink to it from
+somewhere on your Python path.
+
+APPLICATION
+===========
+
+create content/multimedia directory and make sure it's writable by your webserver
+
+On Ubuntu/Debian:
+
+  mkdir multimedia
+  chmod u+w multimedia
+  sudo chgrp www-data multimedia
+  

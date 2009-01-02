@@ -1,0 +1,9 @@
+{% extends "admin/change_form.html" %}
+{% load multimedia_tags %}
+
+{% block form_top %}
+  {{block.super}}
+  {% if original %}
+    <a href="{{original.get_media_url}}">{{original.admin_thumbnail.as_img_tag|safe}}</a>
+  {% endif %}
+{% endblock %}

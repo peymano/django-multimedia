@@ -1,0 +1,40 @@
+{% load multimedia_tags %}
+
+<div class="{% firstof media_class "media_thumbnail" %}_wrapper" style="width:{{thumbnail.width}}px;">
+  <a title="{{thumbnail.media.caption|striptags}}">
+    <img 
+      class="{% firstof media_class "media_thumbnail" %}_img" 
+      src="{{thumbnail.url}}" width="{{thumbnail.width}}" height="{{thumbnail.height}}"
+      {% for name,value in extra %}
+        {{name}}="{{value}}"
+      {% endfor %}
+   />
+  </a>
+  {% if thumbnail.media.attribution_name or thumbnail.media.caption %}
+  <div class="{% firstof media_class "media_thumbnail" %}_caption">
+    {% if thumbnail.media.attribution_name %}
+    <div
+      {% if media_class %}
+        class="{{media_class}}_attribution"
+      {% else %}
+        style="float:right; padding:0 0 10px 10px; color:#666666;font-family:arial,helvetica,sans-serif;font-size:90%;line-height:1.2em;"
+      {% endif %}
+      >
+      By 
+        {% if thumbnail.media.attribution_url %}<a href="{{thumbnail.media.attribution_url}}" rel="nofollow">{% endif %}
+        {{thumbnail.media.attribution_name}}
+        {% if thumbnail.media.attribution_url %}</a>{% endif %}
+    </div>
+    {% endif %}
+    <div 
+      {% if media_class %}
+        class="{{media_class}}_caption_text"
+      {% else %}
+        style="color:#666666;font-family:arial,helvetica,sans-serif;font-size:90%;line-height:1.2em;"
+      {% endif %}
+      >
+      {{thumbnail.media.caption}}
+    </div>
+  </div>
+  {% endif %}
+</div>
