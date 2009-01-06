@@ -4,7 +4,7 @@
   <a title="{{thumbnail.media.caption|striptags}}">
     <img 
       class="{% firstof media_class "media_thumbnail" %}_img" 
-      src="{{thumbnail.url}}" width="{{thumbnail.width}}" height="{{thumbnail.height}}"
+      src="{% if site %}http://{{site.domain}}{% endif %}{{thumbnail.url}}" width="{{thumbnail.width}}" height="{{thumbnail.height}}"
       {% for name,value in extra %}
         {{name}}="{{value}}"
       {% endfor %}
