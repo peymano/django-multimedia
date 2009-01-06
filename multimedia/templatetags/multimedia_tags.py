@@ -1,6 +1,7 @@
 import string
 from types import IntType, LongType, StringType, UnicodeType
 
+from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.template import Context, Library, loader, Node, Template, TemplateSyntaxError
 from django.utils.translation import ugettext as _
@@ -31,7 +32,7 @@ class ThumbnailNode(Node):
       return '<!-- failed to retrieve media with an id of "%d" -->' % self.var_or_id
 
     thumbnail = media.thumbnail(self.format)
-    context = Context({'thumbnail':thumbnail, 'extra':self.extra})
+    context = Context({'thumbnail':thumbnail, 'extra':self.extra, 'site':Site.objects.get_current()})
     return loader.render_to_string(thumbnail.format['template'], context)
 
 
