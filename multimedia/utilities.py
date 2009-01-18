@@ -25,7 +25,7 @@ def parse_format(format):
         name,value = (s,None)
       match = dimension_re.match(name)
       if match:
-        result['dimensions'] = map(lambda s: int(s), match.groups())
+        result['dimensions'] = [int(s) for s in match.groups()]
       elif name == 'square':
         result['square'] = True
       elif name == '!square':
@@ -36,12 +36,16 @@ def parse_format(format):
         result[name] = value.lower()
       elif name == 'template':
         result[name] = value
-      elif name in settings.MULTIMEDIA_FORMATS.keys():
-        f = parse_format(settings.MULTIMEDIA_FORMATS[name])
-        if f:
-          result.update(f)
+      elif name.startswith(':'):
+        name = name[1:]
+        if settings.MULTIMEDIA_FORMATS.has_key(name):
+          f = parse_format(settings.MULTIMEDIA_FORMATS[name])
+          if f:
+            result.update(f)
+          else:
+            raise ValueError('Bad format expression in MULTIMEDIA_FORMATS["%s"]' % name)
         else:
-          raise ValueError('Bad format expression in MULTIMEDIA_FORMATS["%s"]' % name)
+          raise ValueError('Unknown named format "%s"' % name)
       else:
         raise ValueError('Unknown thumbnail format name or setting:',name)
   return result

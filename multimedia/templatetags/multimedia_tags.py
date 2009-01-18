@@ -17,10 +17,11 @@ register = Library()
 
 
 class ThumbnailNode(Node):
-  def __init__(self, var_or_id, format=None, **extra):
-    self.var_or_id = var_or_id
-    self.format    = format
-    self.extra     = extra
+  def __init__(self, var_or_id, context_var=None, format=None, **extra):
+    self.var_or_id   = var_or_id
+    self.context_var = context_var
+    self.format      = format
+    self.extra       = extra
 
   def render(self, context):
     try:
@@ -32,24 +33,12 @@ class ThumbnailNode(Node):
       return '<!-- failed to retrieve media with an id of "%d" -->' % self.var_or_id
 
     thumbnail = media.thumbnail(self.format)
-    context = Context({'thumbnail':thumbnail, 'extra':self.extra, 'site':Site.objects.get_current()})
-    return loader.render_to_string(thumbnail.format['template'], context)
-
-
-class ThumbnailForMediaNode(Node):
-  def __init__(self,var_or_id,format,context_var):
-    self.var_or_id   = var_or_id
-    self.format      = format
-    self.context_var = context_var
-    
-  def render(self, context):
-    if self.var_or_id.isdigit():
-      media = Media.objects.get(id=self.var_or_id)
+    if self.context_var:
+      context[self.context_var] = thumbnail
+      return ''
     else:
-      media = context[self.var_or_id]
-    thumbnail = media.thumbnail(self.format)
-    context[self.context_var] = thumbnail
-    return ''
+      context = Context({'thumbnail':thumbnail, 'extra':self.extra, 'site':Site.objects.get_current()})
+      return loader.render_to_string(thumbnail.format['template'], context)
 
 
 class RecentMediaNode(Node):
@@ -64,14 +53,35 @@ class RecentMediaNode(Node):
     
 def do_thumbnail(parser, token):
   """
-  Outputs an HTML <img> element to a media thumbnail, with an optional format
-  string, otherwise, the 'default' format is used. Extra parameters are added
-  to the <img> element; these can be used to set, e.g., an 'id' or 'class'.
+  Gets the thumbnail image for a given media object and either (1) renders the
+  thumbnail using a given Django template or (2) assigns the thumbnail to a
+  given context variable.
   
   Usage::
   
-    {% thumbnail [id|object] %}
-    {% thumbnail [id|object] with format=400x400,square class=display:block; ... %}
+    To render a thumbnail using the default format:
+    1. {% thumbnail [id|object] %}
+    
+    To render a thumbnail using the specified format:
+    2. {% thumbnail [id|object] with format=400x400,square %}
+    
+    To render a thumbnail and pass extra context variables to the template:
+    3. {% thumbnail [id|object] with format=400x400,square class=display:block; license=free ... %}
+
+    The extra settings (in this case "class" and "license") are passed to the Django template as
+    a context variable called 'extra'. The template would reference these as {{extra.class}} and
+    {{exta.license}}, respectively.
+    
+    To assign the thumbnail to a context variable:
+    4. {% thumbnail [id|object] with format=400x400,square class=display:block; as [context_var] %}
+
+    The thumbnail stored in 'context_var' has the following attributes:
+      
+      media     the Media object for this thumbnail
+      format    the format setting (as a dictionary)
+      url       the url to the thumbnail image
+      width     the width of the thumbnail image
+      height    the height of the thumbnail image
 
   """
   bits = token.contents.split()
@@ -81,49 +91,22 @@ def do_thumbnail(parser, token):
   elif len_bits >= 4:
     if bits[2] != 'with':
       raise TemplateSyntaxError(_("second argument to %s tag must be 'with'") % bits[0])
+    if bits[-2] == 'as':
+      args = bits[3:-2]
+      context_var = bits[-1]
+    else:
+      args = bits[3:]
+      context_var = None
     kwargs = {}
-    for i in range(3, len_bits):
+    for arg in args:
       try:
-        name, value = bits[i].split('=',1)
+        name, value = arg.split('=',1)
         kwargs[str(name)] = str(value)
       except ValueError:
         raise TemplateSyntaxError(_("%s tag was given a badly formatted option: '%s'") % (bits[0],bits[i]))
-    return ThumbnailNode(bits[1],**kwargs)
+    return ThumbnailNode(bits[1],context_var,**kwargs)
   else:
-    raise TemplateSyntaxError(_('%s tag requires either one or three or more arguments') % bits[0])
-
-
-def do_thumbnail_for_media(parser,token):
-  """
-  Retrieves a thumbnail for a given Media object with a given format and stores it
-  in a context variable.
-  
-  Usage::
-
-    {% thumbnail_for_media [id|object] with format=[format] as [context_var] %}
-
-    The thumbnail stored in 'context_var' has the following attributes:
-      
-      media     the Media instance of this thumbnail
-      format    the format setting, as a dictionary
-      url       the url to the thumbnail image
-      width     the width of the thumbnail image
-      height    the height of the thumbnail image
-      
-  """
-  bits = token.contents.split()
-  len_bits = len(bits)
-  if len_bits == 6:
-    if bits[2] != 'with':
-      raise TemplateSyntaxError(_("second argument to %s tag must be 'with'") % bits[0])
-    if bits[4] != 'as':
-      raise TemplateSyntaxError(_("fourth argument to %s tag must be 'as'") % bits[0])
-    if not bits[3].startswith('format='):
-      raise TemplateSyntaxError(_("third argument to %s tag must start with 'format='") % bits[0])
-    format = bits[3].split('=',1)[1]
-    return ThumbnailForMediaNode(bits[1],format,bits[5])
-  else:
-    raise TemplateSyntaxError(_('%s tag requires six arguments') % bits[0])
+    raise TemplateSyntaxError(_('%s tag requires either one or 3+ arguments') % bits[0])
 
 
 def do_recent_media(parser,token):
@@ -160,7 +143,6 @@ def render_multimedia_tags(s):
 
 
 register.tag('thumbnail', do_thumbnail)
-register.tag('thumbnail_for_media', do_thumbnail_for_media)
 register.tag('recent_media', do_recent_media)
 register.filter(thumbnail_url)
 register.filter(render_multimedia_tags)

@@ -9,45 +9,84 @@ on a blog.
 Quick introduction
 ==================
 
-Once installed, you upload media using the Django admin interface. To insert a
-thumbnail in a template:
+Django-multimedia adds a "Media" model to your website. Using the Django admin
+interface, you can upload an image, write a caption for it, specify attribution,
+etc.
 
+To insert a thumbnail image from one of your templates:
+
+  {% load multimedia_tags %}
   {% thumbnail 15 with format=600x400,round=10 %}
   
-...which looks up the image with id=15, creates a 600x400 max thumbnail with rounded
-corners of radius 10 (if it doesn't already exist), and outputs an HTML <img> tag.
+If you use a Media object as a foreign key in your own models, you can refer
+to the media object directly, instead of using its id:
+  
+  {% thumbnail entry.picture format=600x400,round=10 %}
+  
+This renders the Media object with id=15 (or entry.picture) as a 600x400 pixel
+thumbnail image with rounded corners of radius 10 using a default template (see
+below). If the thumbnail doesn't exist, it is automatically generated and stored
+in the same directory as the media file.
 
-The 'format' is shorthand for the look of a thumbnail image. Here are the currently
-supported options:
+The 'format' setting is shorthand for the look of a thumbnail image. Currently,
+the following options are supported:
 
   [width]x[height]          thumbnail width and height
   square or !square         crop image to a square or not
-  round=[n]                 round corners, where n is radius in pixels
-  bg=[color]                background color for the empty space that's created when
-                            an image is rounded (e.g., 'ff0000')
+  round=[n]                 round corners, where n is the radius in pixels
+  bg=[color]                background color for the empty space that's created
+                            when an image is rounded (e.g., 'ff0000')
   template=[template]       Django template used to render the image
+  [:named_format]           refer to a format defined in settings.py
 
-A format can be specified inline, like the above example, or you can name a format
-and refer to it. Here's an example:
+A format can be specified inline, as in the example above, or defined in 
+settings.py and referenced using its name. This is useful when you want a
+consistent format across several templates. For example:
 
   ...in your settings.py:
   
   MULTIMEDIA_FORMATS = [
-    'blog': '600x400,round=10,bg=ffffff,template=blog_image.html',
     'mini': '200x200,square,round=5,bg=ffffff'
+    'blog': '600x400,round=10,bg=ffffff,template=blog/blog_image.html',
   ]
   
   ...in your templates:
   
-  {% thumbnail 43 format=blog %}
+  {% thumbnail 42 format=:mini %}
+  {% thumbnail entry.picture format=:blog %}
+
+By default, a Django template provided with django-multimedia is used to render
+the thumbnail. It renders the image with a <div> wrapper that contains the <img>
+as well as a sub-<div>s for the caption and attribution. This template is defined
+in "multimedia/tempaltes/render_media_default.html". To use your own templates, 
+specify it in the "template=" format setting.
+
+Instead of rendering the thumbnail, you can have it assigned to a context variable.
+For example:
+
+  {% thumbnail 42 format=:mini as minithumb %}
   
-  {% thumbnail 44 format=mini %}
+  ...and then refer to it like so:
+  
+  <div style="float:left; width:{{minithumb.width}}px; height:{{minithumb.height}}px;">
+    ...
+    <p>Caption: {{minithumb.media.caption}}</p>
+    ...
+  </div>
+  
+The context variable "minithumb" has the following attributes:
+
+  media          the Media object for this thumbnail
+  format         the format setting (as a dictionary)
+  url            the url to the thumbnail image
+  width          the width of the thumbnail image
+  height         the height of the thumbnail image
 
 
 Installation
 ============
 
-See ./INSTALL
+There's a setuptools-based installer. See ./INSTALL for details.
 
 Documentation
 =============

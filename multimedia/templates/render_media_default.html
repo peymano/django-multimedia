@@ -1,16 +1,17 @@
 {% load multimedia_tags %}
 
-<div class="{% firstof media_class "media_thumbnail" %}_wrapper" style="width:{{thumbnail.width}}px;">
+<div
+  class="{{extra.class}} {% firstof media_class "media_thumbnail" %}_wrapper"
+  style="width:{{thumbnail.width}}px; {{extra.style}}"
+  >
   <a title="{{thumbnail.media.caption|striptags}}">
     <img 
-      class="{% firstof media_class "media_thumbnail" %}_img" 
-      src="{% if site %}http://{{site.domain}}{% endif %}{{thumbnail.url}}" width="{{thumbnail.width}}" height="{{thumbnail.height}}"
-      {% for name,value in extra %}
-        {{name}}="{{value}}"
-      {% endfor %}
-   />
+      class="{% firstof media_class 'media_thumbnail' %}_img"
+      src="{% if site %}http://{{site.domain}}{% endif %}{{thumbnail.url}}"
+      width="{{thumbnail.width}}" height="{{thumbnail.height}}"
+    />
   </a>
-  {% if thumbnail.media.attribution_name or thumbnail.media.caption %}
+  {% if thumbnail.media.caption or thumbnail.media.attribution_name %}
   <div class="{% firstof media_class "media_thumbnail" %}_caption">
     {% if thumbnail.media.attribution_name %}
     <div
