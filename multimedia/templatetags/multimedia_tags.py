@@ -1,3 +1,4 @@
+import re
 import string
 from types import IntType, LongType, StringType, UnicodeType
 
@@ -25,12 +26,17 @@ class ThumbnailNode(Node):
 
   def render(self, context):
     try:
-      if self.var_or_id.isdigit():
-        media = Media.objects.get(id=self.var_or_id)
+      if context.has_key(self.var_or_id):
+        var_or_id = context[self.var_or_id]
       else:
-        media = context[self.var_or_id]
+        var_or_id = self.var_or_id
+
+      if type(var_or_id) is int or var_or_id.isdigit():
+        media = Media.objects.get(id=var_or_id)
+      else:
+        media = context[var_or_id]
     except ObjectDoesNotExist:
-      return '<!-- failed to retrieve media with an id of "%d" -->' % self.var_or_id
+      return '<!-- failed to retrieve media with an id of "%d" -->' % var_or_id
 
     thumbnail = media.thumbnail(self.format)
     if self.context_var:
@@ -45,38 +51,38 @@ class RecentMediaNode(Node):
   def __init__(self, count, context_var):
     self.count       = count
     self.context_var = context_var
-    
+
   def render(self, context):
     context[self.context_var] = Media.objects.order_by('-imported')[:self.count]
     return ''
-    
-    
+
+
 def do_thumbnail(parser, token):
   """
   Gets the thumbnail image for a given media object and either (1) renders the
   thumbnail using a given Django template or (2) assigns the thumbnail to a
   given context variable.
-  
+
   Usage::
-  
+
     To render a thumbnail using the default format:
     1. {% thumbnail [id|object] %}
-    
+
     To render a thumbnail using the specified format:
     2. {% thumbnail [id|object] with format=400x400,square %}
-    
+
     To render a thumbnail and pass extra context variables to the template:
     3. {% thumbnail [id|object] with format=400x400,square class=display:block; license=free ... %}
 
     The extra settings (in this case "class" and "license") are passed to the Django template as
     a context variable called 'extra'. The template would reference these as {{extra.class}} and
     {{exta.license}}, respectively.
-    
+
     To assign the thumbnail to a context variable:
     4. {% thumbnail [id|object] with format=400x400,square class=display:block; as [context_var] %}
 
     The thumbnail stored in 'context_var' has the following attributes:
-      
+
       media     the Media object for this thumbnail
       format    the format setting (as a dictionary)
       url       the url to the thumbnail image
@@ -124,7 +130,7 @@ def do_recent_media(parser,token):
     if bits[2] != 'as':
       raise TemplateSyntaxError(_("second argument to %s tag must be 'as'") % bits[0])
     if not bits[1].isdigit():
-      raise TemplateSyntaxError(_("first argument to %s tag must be a positive integer") % bits[0])      
+      raise TemplateSyntaxError(_("first argument to %s tag must be a positive integer") % bits[0])
     count = int(bits[1])
     context_var = bits[3]
     return RecentMediaNode(count,context_var)
@@ -142,10 +148,17 @@ def render_multimedia_tags(s):
   return t.render(c)
 
 
+thumbnail_pattern = re.compile(r'{% thumbnail .+ %}',re.M)
+
+def strip_multimedia_tags(s):
+  return string.join(thumbnail_pattern.split(s))
+
+
 register.tag('thumbnail', do_thumbnail)
 register.tag('recent_media', do_recent_media)
 register.filter(thumbnail_url)
 register.filter(render_multimedia_tags)
+register.filter(strip_multimedia_tags)
 
 
 # shorthand for rending all media tagged with X
@@ -154,7 +167,7 @@ register.filter(render_multimedia_tags)
 #
 # @register.inclusion_tag('multimedia/render_media_set.html')
 # def render_media_tagged(tags):
-#     try:        
+#     try:
 #         objects = TaggedItem.objects.get_by_model(Media,tags)
 #         set = 'random' + str(randrange(10000,99999))
 #     except ObjectDoesNotExist:

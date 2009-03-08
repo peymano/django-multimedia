@@ -58,7 +58,7 @@ consistent format across several templates. For example:
 By default, a Django template provided with django-multimedia is used to render
 the thumbnail. It renders the image with a <div> wrapper that contains the <img>
 as well as a sub-<div>s for the caption and attribution. This template is defined
-in "multimedia/tempaltes/render_media_default.html". To use your own templates, 
+in "multimedia/tempaltes/render-media-default.html". To use your own templates, 
 specify it in the "template=" format setting.
 
 Instead of rendering the thumbnail, you can have it assigned to a context variable.
