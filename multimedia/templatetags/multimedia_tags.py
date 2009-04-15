@@ -139,7 +139,11 @@ def do_recent_media(parser,token):
 
 
 def thumbnail_url(media,format=None):
-  return media.thumbnail(format).url
+  thumbnail = media.thumbnail(format)
+  if thumbnail:
+    return thumbnail.url
+  else:
+    return None
 
 
 def render_multimedia_tags(s):

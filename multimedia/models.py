@@ -63,9 +63,12 @@ class Media(models.Model):
   def thumbnail(self,format=None):
     f = compute_format(settings.MULTIMEDIA_FORMATS['default'],format)
     name = self.create_thumbnail(f)
-    url = os.path.join(djangosettings.MEDIA_URL,name)
-    width, height = compute_thumbnail_dimensions((self.width,self.height), f)
-    return Thumbnail(self,f,url,width,height)
+    if name:
+      url = os.path.join(djangosettings.MEDIA_URL,name)
+      width, height = compute_thumbnail_dimensions((self.width,self.height), f)
+      return Thumbnail(self,f,url,width,height)
+    else:
+      return None
 
   def thumbnail_name(self,format):
     # like self.mediafile.name except that the filename is replaced with
@@ -90,12 +93,14 @@ class Media(models.Model):
     return os.path.join(head,s)
 
   def create_thumbnail(self,format):
-    assert(self.kind == 'i')
-    name = self.thumbnail_name(format)
-    filepath = os.path.join(djangosettings.MEDIA_ROOT,name)
-    if not os.path.isfile(filepath):
-      make_thumbnail(self.mediafile.path,format,filepath)
-    return name
+    if self.kind == 'i':
+      name = self.thumbnail_name(format)
+      filepath = os.path.join(djangosettings.MEDIA_ROOT,name)
+      if not os.path.isfile(filepath):
+        make_thumbnail(self.mediafile.path,format,filepath)
+      return name
+    else:
+      return None
 
 
 class Thumbnail(object):
