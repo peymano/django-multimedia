@@ -97,7 +97,10 @@ class Media(models.Model):
       name = self.thumbnail_name(format)
       filepath = os.path.join(djangosettings.MEDIA_ROOT,name)
       if not os.path.isfile(filepath):
-        make_thumbnail(self.mediafile.path,format,filepath)
+        try:
+          make_thumbnail(self.mediafile.path,format,filepath)
+        except IOError:
+          return None
       return name
     else:
       return None

@@ -39,12 +39,15 @@ class ThumbnailNode(Node):
       return '<!-- failed to retrieve media with an id of "%d" -->' % var_or_id
 
     thumbnail = media.thumbnail(self.format)
-    if self.context_var:
-      context[self.context_var] = thumbnail
-      return ''
+    if thumbnail:
+      if self.context_var:
+        context[self.context_var] = thumbnail
+        return ''
+      else:
+        context = Context({'thumbnail':thumbnail, 'extra':self.extra, 'site':Site.objects.get_current()})
+        return loader.render_to_string(thumbnail.format['template'], context)
     else:
-      context = Context({'thumbnail':thumbnail, 'extra':self.extra, 'site':Site.objects.get_current()})
-      return loader.render_to_string(thumbnail.format['template'], context)
+      return ''
 
 
 class RecentMediaNode(Node):
